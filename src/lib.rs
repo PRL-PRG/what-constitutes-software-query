@@ -15,6 +15,7 @@ const HEADERS: [&'static str; 3] = ["pid", "path", "hash_id"];
 // Seedds for different selections
 const SEED_ALL: u128 = 1;
 const SEED_100LOC_7D_10C: u128 = 2;
+const SEED_1000LOC_180D_100C: u128 = 3;
 
 pub fn _map_to_output_format(project: &ItemWithData<Project>) -> Option<Vec<(ProjectId, String, SnapshotId)>> {
     let project_id = project.id();
@@ -132,7 +133,7 @@ pub fn sample_1000loc_180d_100c(database: &Database, _log: &Log, output: &Path) 
         // Make sure you don't sample proejcts that will not convert to output format.
         .filter(can_map_to_output_format)
         // Take a random sample 
-        .sample(Random(SELECTION_SIZE, Seed(SEED_100LOC_7D_10C)))
+        .sample(Random(SELECTION_SIZE, Seed(SEED_1000LOC_180D_100C)))
         // Convert to output format (remove projects that failed to convert)
         .flat_map(map_to_output_format)
         // Save to CSV file
