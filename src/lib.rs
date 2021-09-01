@@ -26,6 +26,7 @@ pub fn _map_to_output_format(project: &ItemWithData<Project>) -> Option<Vec<(Pro
         return None
     }
     let default_branch = default_branch.unwrap();
+    let default_branch_path = format!("refs/heads/{}", default_branch);
 
     // Get all heads, if it's not there, skip and print warning.
     let heads = project.heads_with_data();
@@ -37,7 +38,7 @@ pub fn _map_to_output_format(project: &ItemWithData<Project>) -> Option<Vec<(Pro
 
     // Get head of the default branch if it's not there, skip and print warning, ort if there are several, also print warning.
     let default_heads: Vec<ItemWithData<Head>> = heads.into_iter()
-        .filter(|head| head.name() == default_branch)
+        .filter(|head| head.name() == default_branch_path)
         .collect();
     if default_heads.len() == 0 {
         eprintln!("WARNING: no default head found for project {}, skipping.", project_id);
