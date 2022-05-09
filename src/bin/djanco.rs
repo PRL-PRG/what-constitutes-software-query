@@ -7,6 +7,8 @@ use what_constitutes_software_query;
 
 const PROJECT_NAME: &'static str = "what_constitutes_software_query";
 
+// ./djanco --o /mnt/data/codedj-icse/what-constitutes-software -d /mnt/data/codedj-icse/java-1m1-merged -c /mnt/data/codedj-icse/cache
+
 pub fn main() {
 
     let options = CommandLineOptions::parse();
@@ -33,10 +35,12 @@ pub fn main() {
         }
     }
 
-    let database = prepare_database!(1619827200 /* = May 2021*/, stores!(Generic));
+    //let database = prepare_database!(1619827200 /* = May 2021*/, stores!(Generic));
+    let database = prepare_database!(1606780800 /* = Dec 2020*/, stores!(Generic));
+    execute_query!(database, what_constitutes_software_query::sample_stars);
     execute_query!(database, what_constitutes_software_query::sample_all);
-    execute_query!(database, what_constitutes_software_query::sample_100loc_7d_10c);
-    execute_query!(database, what_constitutes_software_query::sample_1000loc_180d_100c);
+    execute_query!(database, what_constitutes_software_query::sample_developed);
+//    execute_query!(database, what_constitutes_software_query::sample_1000loc_180d_100c);
 
 
     if options.repository.is_some() && !options.do_not_archive_results {

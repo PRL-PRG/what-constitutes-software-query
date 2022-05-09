@@ -69,10 +69,12 @@ pub fn _map_to_output_format(project: &ItemWithData<Project>) -> Option<Vec<(Pro
                 eprintln!("WARNING: path not found for project {} for path id {}, skipping this change.", project_id, path_id);                
                 return None
             }
+            /* THIS IS NORMAL, MEANS FILE HAS BEEN DELETED */
             if snapshot_id.is_none() {
                 eprintln!("WARNING: snapshot id not found for project {} for path id {}, skipping this change.", project_id, path_id);
                 return None
             }
+            
             Some((project_id.clone(), path.unwrap().location(), snapshot_id.unwrap()))
         })
         .collect::<Vec<(ProjectId, String, SnapshotId)>>();
@@ -89,41 +91,75 @@ pub fn can_map_to_output_format(project: &ItemWithData<Project>) -> bool {
     _map_to_output_format(project).is_some()
 }
 
-#[djanco(May, 2021, subsets(Generic))]
-pub fn sample_all(database: &Database, _log: &Log, output: &Path) -> Result<(), std::io::Error>  {
-    database.projects()        
+#[djanco(Dec, 2020, subsets(Generic))]
+pub fn sample_stars(database: &Database, _log: &Log, output: &Path) -> Result<(), std::io::Error>  {
+    database.projects()
+        .filter_by(Equal(project::Language, Language::Java))
+        // top stars
+        .sort_by(project::Stars)
+        .sample(Top(1500))
         // Make sure you don't sample projects that will not convert to output format.
         .filter(can_map_to_output_format)
+        // and sample again, this time only valid projects
+        .sort_by(project::Stars)
+        .sample(Top(1020))
+        // Convert to output format (remove projects that failed to convert)
+        .flat_map(map_to_output_format)
+        // Save to CSV file
+        .into_csv_with_headers_in_dir(HEADERS.to_vec(), output, "sample_stars.csv")
+}
+
+
+#[djanco(Dec, 2020, subsets(Generic))]
+pub fn sample_all(database: &Database, _log: &Log, output: &Path) -> Result<(), std::io::Error>  {
+    database.projects()        
+        .filter_by(Equal(project::Language, Language::Java))
+        // Make sure you don't sample projects that will not convert to output format.
+        .sample(Distinct(Random(SELECTION_SIZE + 1000, Seed(SEED_ALL)), MinRatio(project::Commits, 0.9)))
+        .filter(can_map_to_output_format)
         // Just random sample from all projects
-        .sample(Random(SELECTION_SIZE, Seed(SEED_ALL)))
+        .sample(Distinct(Random(SELECTION_SIZE, Seed(SEED_ALL)), MinRatio(project::Commits, 0.9)))
         // Convert to output format (remove projects that failed to convert)
         .flat_map(map_to_output_format)
         // Save to CSV file
         .into_csv_with_headers_in_dir(HEADERS.to_vec(), output, "sample_all.csv")
 }
 
-#[djanco(May, 2021, subsets(Generic))]
-pub fn sample_100loc_7d_10c(database: &Database, _log: &Log, output: &Path) -> Result<(), std::io::Error>  {
+/* C-Index : 3
+   Age : 364.4
+   Devs : 3
+   Locs : 716.25
+   Versions : 20
+   Commits : 25.95
+   
+   
+*/
+#[djanco(Dec, 2020, subsets(Generic))]
+pub fn sample_developed(database: &Database, _log: &Log, output: &Path) -> Result<(), std::io::Error>  {
     database.projects()        
-        // Require projects have at least 10 commits 
-        .filter_by(AtLeast(Count(project::Commits), 10))
-        // Require projects have at least 7 days of age/lifetime
-        .filter_by(AtLeast(project::Age, Duration::from_days(7)))
-        // Require projects have at least 100 LOCs
-        .filter_by(AtLeast(project::Locs, 100))
+        .filter_by(Equal(project::Language, Language::Java))
+        .filter_by(AtLeast(project::MaxHIndex1, 3))
+        .filter_by(AtLeast(project::Age, Duration::from_days(364)))
+        .filter_by(AtLeast(Count(project::Users), 3))
+        .filter_by(AtLeast(project::Locs, 716))
+        .filter_by(AtLeast(Count(project::Snapshots), 20))
+        .filter_by(AtLeast(Count(project::Commits), 26))
         // Make sure you don't sample proejcts that will not convert to output format.
+        .sample(Distinct(Random(SELECTION_SIZE + 1000, Seed(SEED_100LOC_7D_10C)), MinRatio(project::Commits, 0.9)))
         .filter(can_map_to_output_format)
         // Take a random sample 
-        .sample(Random(SELECTION_SIZE, Seed(SEED_100LOC_7D_10C)))
+        .sample(Distinct(Random(SELECTION_SIZE, Seed(SEED_100LOC_7D_10C)), MinRatio(project::Commits, 0.9)))
         // Convert to output format (remove projects that failed to convert)
         .flat_map(map_to_output_format)
         // Save to CSV file
         .into_csv_with_headers_in_dir(HEADERS.to_vec(), output, "sample_100loc_7d_10c.csv")
 }
 
-#[djanco(May, 2021, subsets(Generic))]
+/*
+#[djanco(Dec, 2020, subsets(Generic))]
 pub fn sample_1000loc_180d_100c(database: &Database, _log: &Log, output: &Path) -> Result<(), std::io::Error>  {
     database.projects()        
+        .filter_by(Equal(project::Language, Language::Java))
         // Require projects have at least 100 commits 
         .filter_by(AtLeast(Count(project::Commits), 100))
         // Require projects have at least 180 days of age/lifetime
@@ -131,11 +167,13 @@ pub fn sample_1000loc_180d_100c(database: &Database, _log: &Log, output: &Path) 
         // Require projects have at least 1000 LOCs
         .filter_by(AtLeast(project::Locs, 1000))
         // Make sure you don't sample proejcts that will not convert to output format.
+        .sample(Distinct(Random(SELECTION_SIZE + 1000, Seed(SEED_1000LOC_180D_100C)), MinRatio(project::Commits, 0.9)))
         .filter(can_map_to_output_format)
         // Take a random sample 
-        .sample(Random(SELECTION_SIZE, Seed(SEED_1000LOC_180D_100C)))
+        .sample(Distinct(Random(SELECTION_SIZE, Seed(SEED_1000LOC_180D_100C)), MinRatio(project::Commits, 0.9)))
         // Convert to output format (remove projects that failed to convert)
         .flat_map(map_to_output_format)
         // Save to CSV file
         .into_csv_with_headers_in_dir(HEADERS.to_vec(), output, "sample_1000loc_180d_100c.csv")
 }
+*/
