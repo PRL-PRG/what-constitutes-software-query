@@ -115,10 +115,10 @@ pub fn sample_all(database: &Database, _log: &Log, output: &Path) -> Result<(), 
     database.projects()        
         .filter_by(Equal(project::Language, Language::Java))
         // Make sure you don't sample projects that will not convert to output format.
-        .sample(Distinct(Random(SELECTION_SIZE + 1000, Seed(SEED_ALL)), MinRatio(project::Commits, 0.9)))
+        .sample(Random(SELECTION_SIZE + 1000, Seed(SEED_ALL))) //, MinRatio(project::Commits, 0.9))
         .filter(can_map_to_output_format)
         // Just random sample from all projects
-        .sample(Distinct(Random(SELECTION_SIZE, Seed(SEED_ALL)), MinRatio(project::Commits, 0.9)))
+        .sample(Random(SELECTION_SIZE, Seed(SEED_ALL))) //, MinRatio(project::Commits, 0.9))
         // Convert to output format (remove projects that failed to convert)
         .flat_map(map_to_output_format)
         // Save to CSV file
