@@ -34,9 +34,9 @@ pub fn main() {
     }
 
     let database = prepare_database!(1606780800 /* = December 2020*/, stores!(Generic));
-    execute_query!(database, what_constitutes_software_query::sample_stars);
-    execute_query!(database, what_constitutes_software_query::sample_all);
-    execute_query!(database, what_constitutes_software_query::sample_developed);
+    execute_query!(database, what_constitutes_software_query::sample_stars_java);
+    execute_query!(database, what_constitutes_software_query::sample_all_java);
+    execute_query!(database, what_constitutes_software_query::sample_developed_java);
 
 
     if options.repository.is_some() && !options.do_not_archive_results {
